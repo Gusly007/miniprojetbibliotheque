@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bibliothèque</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Section Livres -->
+    <section id="livres">
+        <h2>Gestion des Livres</h2>
+        <button id ="deplilivre">Ajouter un livre   </button>
+        <form id="form-livre" style = "display: none; margin-top: 15px;">
+            <!-- Formulaire d'ajout livre -->
+             <input type="text" id="titre" placeholder="Titre du livre" required>
+             <input type="text" id="auteur" placeholder="Auteur du livre" required>
+             <input type="number" id="quantite" placeholder="Quantité" required min="1">
+            <button type="submit" id ="ajouter-livre-btn">Ajouter le livre</button>
+
+        </form>
+        <div id="liste-livres">
+            <!-- Liste des livres -->
+             <button id="refresh" onclick="afficherLivres()">Rafraîchir la liste des livres</button>
+        </div>
+    </section>
+
+    <!-- Section Utilisateurs -->
+    <section id="utilisateurs">
+        <h2>Gestion des Utilisateurs</h2>
+        <form id="form-utilisateur">
+            <!-- Formulaire d'ajout utilisateur -->
+             <input type="text" id="nom" placeholder="Nom de l'utilisateur" required>
+             <input type="text" id="prenom" placeholder="prenom de l'utilisateur" required>
+             <input type="text" id="email" placeholder="Email de l'utilisateur" required>
+            <button type="submit" onclick="gestionajoutUtilisateur(event)">Ajouter l'utilisateur</button>
+        </form>
+        <div id="liste-utilisateurs">
+            <!-- Liste des utilisateurs -->
+             <button id="refresh" onclick="afficherUtilisateurs()">Rafraîchir la liste des utilisateur</button>
+        </div>
+    </section>
+
+    <!-- Section Emprunts -->
+    <section id="emprunts">
+        <h2>Gestion des Emprunts</h2>
+        <form id="form-emprunt">
+            <!-- Formulaire d'emprunt -->
+                <input type="number" id="id-utilisateur" placeholder="ID de l'utilisateur" required min="1">
+                <input type="number" id="id-livre" placeholder="ID du livre" required min="1">
+            <button type="submit" onclick=" gestionEmpruntLivre(event)">Emprunter le livre</button>
+             
+        </form>
+        <div id="liste-emprunts">
+            <!-- Liste des emprunts -->
+                <button id="refresh" onclick="afficherEmprunts()">Rafraîchir la liste des emprunts</button>
+        </div>
+    </section>
+    <!-- Section retour -->
+     <h3>  gestionRetourLivre</h3>
+     <form id="form-retour">    
+        <input type = "number" id="id-emprunt" placeholder="id de l emprunt"required>
+        <button type="submit" onclick="gestionRetourLivre(event)">Retourner le livre</button>
+     </form>
+
+    <script src="biblio.js"></script>
+</body>
+</html>
