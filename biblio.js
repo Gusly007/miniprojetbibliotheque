@@ -99,29 +99,105 @@ function afficherLivres() {
   if (!conteneur) return;
   conteneur.innerHTML = "";
 
-  const livres = getLivres();
+  const q = (document.getElementById("recherche-livres")?.value || "").trim().toLowerCase();
+  const tous = getLivres();
+
+  const livres = !q
+    ? tous
+    : tous.filter(l =>
+        (l.titre || "").toLowerCase().includes(q) ||
+        (l.auteur || "").toLowerCase().includes(q)
+      );
+
   livres.forEach(livre => {
     const ligne = document.createElement("div");
-    ligne.textContent = `${livre.titre} — ${livre.auteur} (disponibles : ${livre.quantiteDisponible ?? 0}) l'id du livre ${livre.id}`;
+    ligne.textContent =
+      `${livre.titre} — ${livre.auteur} (quantité dispo : ${livre.quantiteDisponible ?? 0}) | id: ${livre.id} `;
+
+    // bouton Modifier (étape 2 ci-dessous)
+    const btnEdit = document.createElement("button");
+    btnEdit.textContent = "modifier";
+    btnEdit.style.marginLeft = "8px";
+    btnEdit.addEventListener("click", () => {
+      lancerEditionLivre(livre.id);
+      remplirSelects();
+    });
+    ligne.appendChild(btnEdit);
+
+    // bouton Supprimer (déjà existant dans ton code)
+    const btnDelete = document.createElement("button");
+    btnDelete.textContent = "supprimer";
+    btnDelete.style.marginLeft = "6px";
+    btnDelete.addEventListener("click", () => {
+      supprimerLivre(livre.id);
+      remplirSelects();
+      
+      remplirSelects(); // garder les selects en phase
+    });
+    ligne.appendChild(btnDelete);
+
     conteneur.appendChild(ligne);
   });
 }
+function lancerEditionLivre(id) {
+  const livres = getLivres();
+  const i = livres.findIndex(l => l.id === Number(id));
+  if (i === -1) {
+    console.warn("Livre introuvable");
+    return;
+  }
+  const l = livres[i];
+
+  const newTitre  = prompt("Nouveau titre ?", l.titre ?? "") ?? l.titre;
+  const newAuteur = prompt("Nouvel auteur ?", l.auteur ?? "") ?? l.auteur;
+
+  // On propose le total actuel en valeur par défaut
+  const totalSaisi = prompt("Nouvelle quantité totale ?", String(l.quantiteTotal ?? 0));
+  const newTotal = Math.max(0, Number(totalSaisi ?? l.quantiteTotal));
+  if (!Number.isFinite(newTotal)) {
+    alert("Quantité totale invalide");
+    return;
+  }
+
+  // Conserver le nombre d’exemplaires actuellement empruntés
+  const empruntes = Math.max(0, (l.quantiteTotal ?? 0) - (l.quantiteDisponible ?? 0));
+  const newDispo = Math.max(0, newTotal - empruntes); // ne jamais rendre négatif
+
+  // Écrire
+  l.titre = (newTitre ?? "").trim();
+  l.auteur = (newAuteur ?? "").trim();
+  l.quantiteTotal = newTotal;
+  l.quantiteDisponible = newDispo;
+
+  setLivres(livres);
+  afficherLivres();
+  afficherEmprunts();  // au cas où les libellés utilisent le titre
+  remplirSelects();    // pour mettre à jour les <select> d’emprunt/retour
+}
+
+
+// Rattacher l'input de recherche
+document.getElementById("recherche-livres")?.addEventListener("input", () => {
+  afficherLivres();
+});
+
 
 function supprimerLivre(id) {
     // Supprimer un livre par son ID
     if (!id){
         return {succes: false, message:"il faut imperativement rrentre l id du livre que vous voulez supprimer "}
     }
-    const idtemp = id.trim();
+    const idtemp = Number(id);
     const livres = getLivres();
-    let existant = livres.find(livre=>livre.id === idtemp);
+    let existant = livres.find(livre=>livre.id ===  idtemp);
     if(!existant){
         console.log("le livre n existe pas dans la base");
         return {succes :false, message:"le livre n existe pas dans la base "};
     }
-    idtodelete = livres.indexOf(idtemp);
-    livres.splice(idtemp,1);
+    indextodelete = livres.findIndex(i => i.id === idtemp);
+    livres.splice(indextodelete,1);
     setLivres(livres);
+    afficherLivres();
     return {success : true, message: "element supprimer"}
 }
 
@@ -176,17 +252,76 @@ function ajouterUtilisateur(nom, prenom, email) {
 
 function afficherUtilisateurs() {
   const conteneur = document.getElementById("liste-utilisateurs");
-  if (!conteneur) return; // sécurité si l'élément n'existe pas
+  if (!conteneur) return;
 
   conteneur.innerHTML = "";
   const utilisateurs = getUtilisateurs();
 
   utilisateurs.forEach(utilisateur => {
     const ligne = document.createElement("div");
-    ligne.textContent = `${utilisateur.prenom} ${utilisateur.nom} (email: ${utilisateur.email}) (id utilisateur: ${utilisateur.id})`;
+    ligne.textContent =
+      `${utilisateur.prenom} ${utilisateur.nom} (email: ${utilisateur.email}) (id: ${utilisateur.id}) `;
+
+    // bouton Modifier
+    const btnEdit = document.createElement("button");
+    btnEdit.textContent = "modifier";
+    btnEdit.style.marginLeft = "8px";
+    btnEdit.addEventListener("click", () => {
+      lancerEditionUtilisateur(utilisateur.id);
+      remplirSelects();
+    });
+    ligne.appendChild(btnEdit);
+
+    // bouton Supprimer (déjà existant)
+    const bouton = document.createElement("button");
+    bouton.textContent = "supprimer";
+    bouton.style.marginLeft = "6px";
+    bouton.addEventListener("click", () => { 
+      supprimerUtilisateur(utilisateur.id);
+      remplirSelects(); 
+    });
+    ligne.appendChild(bouton);
+
     conteneur.appendChild(ligne);
   });
 }
+
+function lancerEditionUtilisateur(id) {
+  const utilisateurs = getUtilisateurs();
+  const i = utilisateurs.findIndex(u => u.id === Number(id));
+  if (i === -1) {
+    console.warn("Utilisateur introuvable");
+    return;
+  }
+  const u = utilisateurs[i];
+
+  const newPrenom = prompt("Nouveau prénom ?", u.prenom ?? "") ?? u.prenom;
+  const newNom    = prompt("Nouveau nom ?", u.nom ?? "") ?? u.nom;
+  const newEmail  = prompt("Nouvel email ?", u.email ?? "") ?? u.email;
+  const emailNorm = (newEmail ?? "").trim().toLowerCase();
+
+  if (!newPrenom?.trim() || !newNom?.trim() || !emailNorm) {
+    alert("Tous les champs sont requis.");
+    return;
+  }
+
+  // Unicité email (hors lui-même)
+  const doublon = utilisateurs.some(x => x.id !== u.id && (x.email || "").toLowerCase() === emailNorm);
+  if (doublon) {
+    alert("Cet email est déjà utilisé.");
+    return;
+  }
+
+  u.prenom = newPrenom.trim();
+  u.nom = newNom.trim();
+  u.email = emailNorm;
+
+  setUtilisateurs(utilisateurs);
+  afficherUtilisateurs();
+  afficherEmprunts(); // si tu affiches les noms dans la liste d’emprunts
+  remplirSelects();   // pour que le <select> d’emprunt reflète le nouveau nom
+}
+
 
 function supprimerUtilisateur(id) {
   // id peut arriver en string depuis le DOM
@@ -204,6 +339,7 @@ function supprimerUtilisateur(id) {
 
   utilisateurs.splice(index, 1);
   setUtilisateurs(utilisateurs);
+  afficherUtilisateurs();
 
   return { succes: true, message: "Utilisateur supprimé." };
 }
@@ -234,12 +370,12 @@ function emprunterLivre(utilisateurId, livreId) {
   }
 
   // vérifier utilisateur
-  const utilisateurs = getUtilisateurs(); // <- doit exister
+  const utilisateurs = getUtilisateurs(); // 
   const user = utilisateurs.find(u => u.id === uid);
   if (!user) return { succes: false, message: "L'utilisateur n'existe pas dans la base." };
 
   // vérifier livre
-  const livres = getLivres(); // <- doit exister
+  const livres = getLivres(); // 
   const book = livres.find(l => l.id === bid);
   if (!book) return { succes: false, message: "Le livre n'existe pas dans la base." };
   if ((book.quantiteDisponible ?? 0) < 1) {
@@ -253,7 +389,8 @@ function emprunterLivre(utilisateurId, livreId) {
 
   // décrémenter stock + enregistrer emprunt
   book.quantiteDisponible -= 1;
-  setLivres(livres); // <- doit exister
+  setLivres(livres); // 
+  afficherEmprunts();
 
   const nouvelEmprunt = {
     id: getNextIdEmprunt(),
@@ -264,6 +401,7 @@ function emprunterLivre(utilisateurId, livreId) {
   };
   emprunts.push(nouvelEmprunt);
   setEmprunts(emprunts);
+  afficherEmprunts();
 
   return { succes: true, message: `Le livre "${book.titre}" a été emprunté avec succès.`, emprunt: nouvelEmprunt };
 }
@@ -348,6 +486,7 @@ if (event)
   console.log(quantite);
 
 const resultat = ajouterLivre(titre, auteur, parseInt(quantite));
+remplirSelects();
 console.log(resultat.message);
 afficherLivres();
 }
@@ -368,36 +507,76 @@ function gestionajoutUtilisateur(event) {
         console.log(email);
     const resultat = ajouterUtilisateur(nom, prenom, email);
     afficherUtilisateurs();
+      remplirSelects();
     console.log(resultat.message);
     }   
 // Gestion du formulaire d'emprunt de livre
-document.getElementById("form-emprunt").addEventListener("submit",gestionEmpruntLivre)
+// JS
+document.getElementById("form-emprunt").addEventListener("submit", gestionEmpruntLivre);
+
 function gestionEmpruntLivre(event) {
-    if (event)
-        { 
-            event.preventDefault(); // Empêche le rechargement de la page
-        }
-        const utilisateurId = document.getElementById("id-utilisateur").value;
-        console.log(utilisateurId);
-        const livreId = document.getElementById("id-livre").value;
-        console.log(livreId);
-    const resultat = emprunterLivre(parseInt(utilisateurId), parseInt(livreId));
-    afficherEmprunts();
-    console.log(resultat.message);
-    }
+  event?.preventDefault(); // empêche le rechargement
+
+  const utilisateurIdStr = document.getElementById("selectionutilisateur").value;
+  const livreIdStr       = document.getElementById("selectionlivre").value;
+
+  if (!utilisateurIdStr || !livreIdStr) {
+    console.warn("Choisissez un utilisateur et un livre avant de valider.");
+    return;
+  }
+
+  const utilisateurId = parseInt(utilisateurIdStr, 10);
+  const livreId       = parseInt(livreIdStr, 10);
+
+  if (Number.isNaN(utilisateurId) || Number.isNaN(livreId)) {
+    console.warn("IDs invalides.");
+    return;
+  }
+
+  const resultat = emprunterLivre(utilisateurId, livreId); 
+  
+
+  // Rafraîchir les vues
+  afficherEmprunts();
+  afficherLivres();
+  remplirSelects();
+
+  console.log(resultat?.message ?? "Emprunt traité.");
+}
+
 // Gestion du formulaire de retour de livre
-document.getElementById("form-retour").addEventListener("submit",gestionRetourLivre)
+// Branche le submit du formulaire
+document.getElementById("form-retour").addEventListener("submit", gestionRetourLivre);
+
 function gestionRetourLivre(event) {
-    if (event)  
-        { 
-            event.preventDefault(); // Empêche le rechargement de la page
-        }
-        const empruntId = document.getElementById("id-emprunt").value;
-        console.log(empruntId);
-    const resultat = retournerLivre(parseInt(empruntId));
-    console.log(resultat.message);
-    afficherEmprunts();
-    }
+  event?.preventDefault(); // Empêche le rechargement
+
+  const select = document.getElementById("selectionlivrearetourner");
+  const empruntIdStr = select.value;
+
+  if (!empruntIdStr) {
+    console.warn("Choisissez un emprunt à retourner.");
+    return;
+  }
+
+  const empruntId = parseInt(empruntIdStr, 10);
+  if (Number.isNaN(empruntId)) {
+    console.warn("ID d'emprunt invalide.");
+    return;
+  }
+
+  const resultat = retournerLivre(empruntId); 
+  remplirSelects();
+  console.log(resultat?.message ?? "Retour traité.");
+
+  // Rafraîchir l'UI
+  afficherEmprunts();
+  afficherLivres();
+
+  // Optionnel : remettre le select à vide
+  select.value = "";
+}
+
 //ajouter d ecouteur sur les boutons pour deplier les formulaire
 const btn = document.getElementById("deplilivre");
 const formliv = document.getElementById("form-livre");
@@ -408,4 +587,47 @@ btn.addEventListener("click",()=> {
     }else{
         formliv.style.display = "none";
     }
+});
+function remplirSelects() {
+  const selectUser   = document.getElementById("selectionutilisateur");
+  const selectLivre  = document.getElementById("selectionlivre");
+  const selectRetour = document.getElementById("selectionlivrearetourner");
+
+  if (selectUser) {
+    selectUser.innerHTML = '<option value="">-- Sélectionner un utilisateur --</option>';
+    getUtilisateurs().forEach(u => {
+      const opt = document.createElement("option");
+      opt.value = String(u.id);
+      opt.textContent = `${u.prenom} ${u.nom} (id: ${u.id})`;
+      selectUser.appendChild(opt);
+    });
+  }
+
+  if (selectLivre) {
+    selectLivre.innerHTML = '<option value="">-- Sélectionner un livre --</option>';
+    getLivres().forEach(l => {
+      const opt = document.createElement("option");
+      opt.value = String(l.id);
+      opt.textContent = `${l.titre} ${l.auteur} (id: ${l.id})`;
+      selectLivre.appendChild(opt);
+    });
+  }
+
+  if (selectRetour) {
+    selectRetour.innerHTML = '<option value="">-- Sélectionner un emprunt --</option>';
+    getEmprunts().filter(e => e.statut === "actif").forEach(e => {
+      const opt = document.createElement("option");
+      opt.value = String(e.id); // ID d'emprunt !
+      opt.textContent = `Emprunt #${e.id}`;
+      selectRetour.appendChild(opt);
+    });
+  }
+}
+
+// Appeler au chargement
+document.addEventListener("DOMContentLoaded", () => {
+  remplirSelects();
+  afficherLivres();
+  afficherUtilisateurs();
+  afficherEmprunts();
 });

@@ -5,6 +5,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="toolbar-livres" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">
+  <input id="recherche-livres" type="search" placeholder="Rechercher (titre ou auteur)" style="max-width:260px; padding:6px 10px;">
+</div>
+
     <!-- Section Livres -->
     <section id="livres">
         <h2>Gestion des Livres</h2>
@@ -44,8 +48,12 @@
         <h2>Gestion des Emprunts</h2>
         <form id="form-emprunt">
             <!-- Formulaire d'emprunt -->
-                <input type="number" id="id-utilisateur" placeholder="ID de l'utilisateur" required min="1">
-                <input type="number" id="id-livre" placeholder="ID du livre" required min="1">
+                <select id = "selectionutilisateur">    
+                    <option value="">--selectionner l'utilisateur--</option>
+                </select>
+                <select id = 'selectionlivre'>    
+                    <option value="">--selectionner le livrer--</option>
+                </select>
             <button type="submit" onclick=" gestionEmpruntLivre(event)">Emprunter le livre</button>
              
         </form>
@@ -57,7 +65,9 @@
     <!-- Section retour -->
      <h3>  gestionRetourLivre</h3>
      <form id="form-retour">    
-        <input type = "number" id="id-emprunt" placeholder="id de l emprunt"required>
+        <select id = 'selectionlivrearetourner'>    
+                    <option value="">--selectionner le livrer--</option>
+                </select>
         <button type="submit" onclick="gestionRetourLivre(event)">Retourner le livre</button>
      </form>
 
