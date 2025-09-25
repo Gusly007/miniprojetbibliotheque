@@ -318,7 +318,7 @@ function lancerEditionUtilisateur(id) {
 
   setUtilisateurs(utilisateurs);
   afficherUtilisateurs();
-  afficherEmprunts(); // si tu affiches les noms dans la liste d’emprunts
+  afficherEmprunts(); 
   remplirSelects();   // pour que le <select> d’emprunt reflète le nouveau nom
 }
 
@@ -345,7 +345,6 @@ function supprimerUtilisateur(id) {
 }
 
 // Emprunts
-// Helpers cohérents
 const EM_KEY = "emprunts";
 const EM_ID  = "prochainIdEmprunt";
 
